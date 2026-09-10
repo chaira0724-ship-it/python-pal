@@ -203,7 +203,13 @@ export function findAnswer(question: string): MatchResult {
       for (const term of queryVec.keys()) if (kw.has(term)) hits += 1;
       const overlap = hits / Math.max(queryVec.size, 1);
 
-      return { entry, score: cosine * 0.7 + overlap * 0.3 };
+      // title overlap bonus: the stored question itself is the strongest signal
+      const titleTokens = new Set(tokenize(entry.question));
+      let titleHits = 0;
+      for (const term of queryVec.keys()) if (titleTokens.has(term)) titleHits += 1;
+      const titleOverlap = titleHits / Math.max(queryVec.size, 1);
+
+      return { entry, score: cosine * 0.55 + overlap * 0.25 + titleOverlap * 0.2 };
     })
     .sort((a, b) => b.score - a.score);
 
