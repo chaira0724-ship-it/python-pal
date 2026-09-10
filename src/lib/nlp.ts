@@ -10,7 +10,7 @@ const STOPWORDS = new Set([
   "that","these","those","there","here","what","which","who","whom","how","when","where","why","can",
   "could","should","would","will","shall","may","might","must","not","no","yes","please","tell","explain",
   "show","give","help","want","need","know","use","using","used","work","works","working","make","get",
-  "difference","between","mean","means","meaning","python","py","question","some","any","all","just",
+  "difference","between","mean","means","meaning","question","some","any","all","just",
 ]);
 
 const SYNONYMS: Record<string, string> = {
@@ -98,7 +98,7 @@ export function tokenize(text: string): string[] {
 
   const out: string[] = [];
   for (const word of raw) {
-    if (word.length < 2) continue;
+    if (word.length < 2 && !/^[0-9]$/.test(word)) continue;
     if (STOPWORDS.has(word)) continue;
     out.push(stem(word));
   }
