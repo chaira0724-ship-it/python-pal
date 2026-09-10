@@ -193,12 +193,25 @@ export function findAnswer(question: string): MatchResult {
 
   const best = scored[0];
 
+  // Near miss: still a plausible page in the notebook, so share it but say it's a guess.
+  if (best && best.score >= NEAR_MISS_THRESHOLD && best.score < CONFIDENCE_THRESHOLD) {
+    return {
+      matched: true,
+      confidence: Math.round(best.score * 100) / 100,
+      topic: `closest note · ${best.entry.topic}`,
+      answer: `I'm not certain that's what you meant. The closest note I have answers "${best.entry.question}":\n\n${best.entry.answer}`,
+      ...(best.entry.code ? { code: best.entry.code } : {}),
+      matchedQuestion: best.entry.question,
+      suggestions: scored.slice(1, 4).map((s) => s.entry.question),
+    };
+  }
+
   if (!best || best.score < CONFIDENCE_THRESHOLD) {
     return {
       matched: false,
       confidence: best ? Math.round(best.score * 100) / 100 : 0,
       answer:
-        "I don't have a confident answer to that one yet. I'm strongest on Python basics, variables, data types, lists, tuples, dictionaries, sets, conditionals, loops, functions, OOP, modules, exceptions, file handling, comprehensions, and common errors — try asking about one of those.",
+        "I don't have a note on that one yet. I cover Python basics, variables, data types, strings, numbers, lists, tuples, dictionaries, sets, conditionals, loops, functions, decorators, generators, OOP, modules and packages, exceptions, files, JSON and CSV, dates, regex, concurrency, testing, tooling and common errors — try one of those, or rephrase with a keyword.",
       suggestions: scored.slice(0, 3).map((s) => s.entry.question),
     };
   }
