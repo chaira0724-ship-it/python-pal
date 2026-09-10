@@ -63,7 +63,7 @@ export const knowledgeBaseExtra: KbEntry[] = [
     id: "x-division",
     topic: "numbers and operators",
     question: "What is the difference between / and // in Python?",
-    keywords: ["division", "divide", "floor", "modulo", "remainder", "operator", "power"],
+    keywords: ["division", "divide", "floor", "floordiv", "modulo", "remainder", "operator", "power"],
     answer:
       "/ is true division and always gives a float. // is floor division and rounds down to the nearest whole number. % gives the remainder and ** raises to a power.",
     code: "print(7 / 2)   # 3.5\nprint(7 // 2)  # 3\nprint(7 % 2)   # 1\nprint(2 ** 10)  # 1024",
@@ -128,7 +128,7 @@ export const knowledgeBaseExtra: KbEntry[] = [
     id: "x-remove-duplicates",
     topic: "sets",
     question: "How do I remove duplicates from a list?",
-    keywords: ["duplicate", "unique", "distinct", "set", "dedupe", "repeat"],
+    keywords: ["duplicate", "duplicates", "unique", "distinct", "set", "dedupe", "repeat", "remove"],
     answer:
       "Convert to a set for uniqueness (order is lost), or use dict.fromkeys() when you need to keep the original order.",
     code: "nums = [3, 1, 3, 2, 1]\nprint(list(set(nums)))\nprint(list(dict.fromkeys(nums)))  # order kept",
@@ -218,7 +218,7 @@ export const knowledgeBaseExtra: KbEntry[] = [
     id: "x-is-vs-equals",
     topic: "common errors",
     question: "What is the difference between == and is?",
-    keywords: ["is", "equal", "identity", "compare", "none", "same", "operator"],
+    keywords: ["is", "equality", "inequality", "equal", "identity", "compare", "none", "same", "operator"],
     answer:
       "== compares values, is compares identity — whether two names point to the same object. Use == for data and is only for singletons like None, True and False.",
     code: 'a = [1, 2]\nb = [1, 2]\nprint(a == b, a is b)  # True False\nvalue = None\nprint(value is None)',
