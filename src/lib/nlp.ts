@@ -1,4 +1,7 @@
-import { knowledgeBase, type KbEntry } from "./knowledge-base";
+import { knowledgeBase as knowledgeBaseCore, type KbEntry } from "./knowledge-base";
+import { knowledgeBaseExtra } from "./knowledge-base-extra";
+
+const knowledgeBase: KbEntry[] = [...knowledgeBaseCore, ...knowledgeBaseExtra];
 
 const STOPWORDS = new Set([
   "a","an","the","and","or","but","if","then","than","so","of","in","on","at","to","for","from","by",
@@ -7,7 +10,7 @@ const STOPWORDS = new Set([
   "that","these","those","there","here","what","which","who","whom","how","when","where","why","can",
   "could","should","would","will","shall","may","might","must","not","no","yes","please","tell","explain",
   "show","give","help","want","need","know","use","using","used","work","works","working","make","get",
-  "difference","between","mean","means","meaning","python","py","question","some","any","all","just",
+  "difference","between","mean","means","meaning","question","some","any","all","just",
 ]);
 
 const SYNONYMS: Record<string, string> = {
@@ -71,8 +74,23 @@ function stem(word: string): string {
   return word;
 }
 
+/** Turn Python symbols into words so questions like "== vs is" still carry meaning. */
+function spellSymbols(text: string): string {
+  return text
+    .replace(/f-?string/gi, " fstring ")
+    .replace(/:=/g, " walrus ")
+    .replace(/==/g, " equality ")
+    .replace(/!=/g, " inequality ")
+    .replace(/\/\//g, " floordiv ")
+    .replace(/\*\*kwargs/gi, " kwargs ")
+    .replace(/\*args/gi, " args ")
+    .replace(/\*\*/g, " power ")
+    .replace(/%/g, " modulo ")
+    .replace(/\bself\b/gi, " self ");
+}
+
 export function tokenize(text: string): string[] {
-  const raw = text
+  const raw = spellSymbols(text)
     .toLowerCase()
     .replace(/[^a-z0-9_]+/g, " ")
     .split(" ")
@@ -80,7 +98,7 @@ export function tokenize(text: string): string[] {
 
   const out: string[] = [];
   for (const word of raw) {
-    if (word.length < 2) continue;
+    if (word.length < 2 && !/^[0-9]$/.test(word)) continue;
     if (STOPWORDS.has(word)) continue;
     out.push(stem(word));
   }
@@ -143,6 +161,7 @@ export type MatchResult = {
 };
 
 const CONFIDENCE_THRESHOLD = 0.28;
+const NEAR_MISS_THRESHOLD = 0.15;
 
 export function findAnswer(question: string): MatchResult {
   const tokens = tokenize(question);
@@ -184,18 +203,37 @@ export function findAnswer(question: string): MatchResult {
       for (const term of queryVec.keys()) if (kw.has(term)) hits += 1;
       const overlap = hits / Math.max(queryVec.size, 1);
 
-      return { entry, score: cosine * 0.7 + overlap * 0.3 };
+      // title overlap bonus: the stored question itself is the strongest signal
+      const titleTokens = new Set(tokenize(entry.question));
+      let titleHits = 0;
+      for (const term of queryVec.keys()) if (titleTokens.has(term)) titleHits += 1;
+      const titleOverlap = titleHits / Math.max(queryVec.size, 1);
+
+      return { entry, score: cosine * 0.55 + overlap * 0.25 + titleOverlap * 0.2 };
     })
     .sort((a, b) => b.score - a.score);
 
   const best = scored[0];
+
+  // Near miss: still a plausible page in the notebook, so share it but say it's a guess.
+  if (best && best.score >= NEAR_MISS_THRESHOLD && best.score < CONFIDENCE_THRESHOLD) {
+    return {
+      matched: true,
+      confidence: Math.round(best.score * 100) / 100,
+      topic: `closest note · ${best.entry.topic}`,
+      answer: `I'm not certain that's what you meant. The closest note I have answers "${best.entry.question}":\n\n${best.entry.answer}`,
+      ...(best.entry.code ? { code: best.entry.code } : {}),
+      matchedQuestion: best.entry.question,
+      suggestions: scored.slice(1, 4).map((s) => s.entry.question),
+    };
+  }
 
   if (!best || best.score < CONFIDENCE_THRESHOLD) {
     return {
       matched: false,
       confidence: best ? Math.round(best.score * 100) / 100 : 0,
       answer:
-        "I don't have a confident answer to that one yet. I'm strongest on Python basics, variables, data types, lists, tuples, dictionaries, sets, conditionals, loops, functions, OOP, modules, exceptions, file handling, comprehensions, and common errors — try asking about one of those.",
+        "I don't have a note on that one yet. I cover Python basics, variables, data types, strings, numbers, lists, tuples, dictionaries, sets, conditionals, loops, functions, decorators, generators, OOP, modules and packages, exceptions, files, JSON and CSV, dates, regex, concurrency, testing, tooling and common errors — try one of those, or rephrase with a keyword.",
       suggestions: scored.slice(0, 3).map((s) => s.entry.question),
     };
   }
