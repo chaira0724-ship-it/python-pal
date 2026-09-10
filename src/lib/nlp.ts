@@ -146,6 +146,7 @@ export type MatchResult = {
 };
 
 const CONFIDENCE_THRESHOLD = 0.28;
+const NEAR_MISS_THRESHOLD = 0.15;
 
 export function findAnswer(question: string): MatchResult {
   const tokens = tokenize(question);
