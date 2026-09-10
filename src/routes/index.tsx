@@ -72,7 +72,7 @@ function Chat() {
 
   const send = useCallback(
     async (raw: string) => {
-      const question = raw.trim();
+      const question = raw.trim().slice(0, 500);
       if (!question || pending) return;
 
       setDraft("");
@@ -311,6 +311,7 @@ function Chat() {
                   type="text"
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
+                  maxLength={500}
                   placeholder="Ask a Python question…"
                   aria-label="Ask a Python question"
                   className="w-full bg-transparent py-3 text-[15px] text-ink placeholder:text-soft outline-none"
