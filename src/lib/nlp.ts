@@ -1,4 +1,7 @@
-import { knowledgeBase, type KbEntry } from "./knowledge-base";
+import { knowledgeBase as knowledgeBaseCore, type KbEntry } from "./knowledge-base";
+import { knowledgeBaseExtra } from "./knowledge-base-extra";
+
+const knowledgeBase: KbEntry[] = [...knowledgeBaseCore, ...knowledgeBaseExtra];
 
 const STOPWORDS = new Set([
   "a","an","the","and","or","but","if","then","than","so","of","in","on","at","to","for","from","by",
