@@ -74,8 +74,23 @@ function stem(word: string): string {
   return word;
 }
 
+/** Turn Python symbols into words so questions like "== vs is" still carry meaning. */
+function spellSymbols(text: string): string {
+  return text
+    .replace(/f-?string/gi, " fstring ")
+    .replace(/:=/g, " walrus ")
+    .replace(/==/g, " equality ")
+    .replace(/!=/g, " inequality ")
+    .replace(/\/\//g, " floordiv ")
+    .replace(/\*\*kwargs/gi, " kwargs ")
+    .replace(/\*args/gi, " args ")
+    .replace(/\*\*/g, " power ")
+    .replace(/%/g, " modulo ")
+    .replace(/\bself\b/gi, " self ");
+}
+
 export function tokenize(text: string): string[] {
-  const raw = text
+  const raw = spellSymbols(text)
     .toLowerCase()
     .replace(/[^a-z0-9_]+/g, " ")
     .split(" ")
