@@ -205,7 +205,7 @@ export function findAnswer(question: string): MatchResult {
     confidence: Math.min(0.99, Math.round(best.score * 100) / 100),
     topic: best.entry.topic,
     answer: best.entry.answer,
-    code: best.entry.code,
+    ...(best.entry.code ? { code: best.entry.code } : {}),
     matchedQuestion: best.entry.question,
   };
 }
